@@ -1,4 +1,4 @@
-# Copyright 2011 The greplin-exception-catcher Authors.
+# Copyright 2011 The gae-exception-catcher Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -482,6 +482,51 @@ class ClearDatabasePage(AuthPage):
       self.redirect(users.create_login_url(self.request.uri))
 
 
+#### Extra page for creating exceptions:
+
+import random
+import sys
+import time
+import traceback
+
+class ErrorPage(webapp.RequestHandler):
+  """Page that generates errors."""
+	
+  def get(self):
+    for i in range(10):
+      error = random.choice(range(4))
+      project = 'frontend'
+      try:
+        if error == 0:
+          x = 10 / 0
+          project = 'backend'
+        elif error == 1:
+          json.loads('{"abc", [1, 2')
+        elif error == 2:
+          x = {}
+          y = x['y']
+        elif error == 3:
+          x = {}
+          y = x['z']
+      except:
+        excInfo = sys.exc_info()
+        stack = traceback.format_exc()
+        env = random.choice([''])
+        exception = {
+          'timestamp': time.time(),    
+          'project': project,
+          'serverName':'%s %s %d' % (env, project, random.choice(range(3))),
+          'type': excInfo[0].__module__ + '.' + excInfo[0].__name__,
+          'environment': env,
+          'message': str(excInfo[1]),
+          'logMessage': 'Log message goes here',
+          'backtrace': stack,
+          'context':{'userId':random.choice(range(20))}
+        }
+        putException(exception)
+
+    self.response.out.write('Done!')
+
 
 ####### Application. #######
 
@@ -498,6 +543,8 @@ def main():
 
         ('/view/(.*)', ViewPage),
         ('/resolve/(.*)', ResolvePage),
+
+		    ('/error', ErrorPage)
       ],
       debug=True)
 
